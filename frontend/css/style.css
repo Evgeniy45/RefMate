@@ -1,11 +1,16 @@
 body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-.login__container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 300px; text-align: center; }
+
+/* Змінено ширину на гнучку (max-width) для телефонів */
+.login__container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 350px; box-sizing: border-box; text-align: center; }
+
 .form__group { margin-bottom: 1rem; text-align: left; }
 .form__label { display: block; margin-bottom: 0.5rem; }
-.form__input { width: 100%; padding: 0.5rem; box-sizing: border-box; }
+.form__input { width: 100%; padding: 0.5rem; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+
 .button { width: 100%; padding: 0.7rem; background-color: #e85d04; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
 .button:hover { background-color: #dc2f02; }
 .form__error { margin-top: 1rem; font-size: 0.9rem; }
+
 /* Стилі для кабінету */
 .page--dashboard { display: block; height: auto; background-color: #f8f9fa; }
 .header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 1rem 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -13,10 +18,59 @@ body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex;
 .header__user { display: flex; align-items: center; gap: 1rem; }
 .badge { background: #eee; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
 .button--small { padding: 0.4rem 0.8rem; width: auto; font-size: 0.9rem; }
-.dashboard-content { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+.dashboard-content { padding: 2rem; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
 
 /* Стилі для карток і таблиць */
 .dashboard-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 2rem; }
-.table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+.table { width: 100%; border-collapse: collapse; margin-top: 1rem; min-width: 600px; /* Гарантує, що таблиця не стиснеться занадто сильно */ }
 .table th, .table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
 .table th { background-color: #f8f9fa; color: #555; font-weight: bold; }
+
+/* Рядок форми (поля поруч) */
+.form-row { display: flex; gap: 10px; margin-bottom: 1rem; }
+
+/* =========================================================
+   АДАПТИВНІСТЬ ДЛЯ МОБІЛЬНИХ ПРИСТРОЇВ
+   ========================================================= */
+
+/* Обгортка для горизонтального скролу таблиць */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 15px;
+        padding: 1rem;
+    }
+    
+    .header__user {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .dashboard-content {
+        padding: 1rem;
+    }
+    
+    /* Робимо поля, які були поруч, колонкою одне під одним */
+    .form-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .button--small {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .dashboard-card {
+        padding: 1rem;
+    }
+}
