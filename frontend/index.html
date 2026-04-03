@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вхід - RefMate</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page">
+    <main class="login">
+        <div class="login__container">
+            <h1 class="login__title">RefMate</h1>
+            <p class="login__subtitle">Система призначення арбітрів</p>
+            
+            <form class="form" id="loginForm">
+                <div class="form__group">
+                    <label class="form__label" for="email">Email</label>
+                    <input class="form__input" type="email" id="email" required placeholder="admin@refmate.com">
+                </div>
+                <div class="form__group">
+                    <label class="form__label" for="password">Пароль</label>
+                    <input class="form__input" type="password" id="password" required placeholder="123">
+                </div>
+                <button class="button button--primary" type="submit">Увійти</button>
+                <p style="margin-top: 1rem; font-size: 0.9rem;">
+                    Немає акаунта? <a href="register.html" style="color: #e85d04;">Зареєструватися як Арбітр</a>
+                </p>
+                <div class="form__error" id="errorMessage"></div>
+            </form>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

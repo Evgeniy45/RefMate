@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Реєстрація - RefMate</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page">
+    <main class="login">
+        <div class="login__container" style="width: 400px;">
+            <h1 class="login__title">Реєстрація</h1>
+            <p class="login__subtitle">Приєднуйтесь до системи RefMate</p>
+            
+            <form class="form" id="registerForm">
+                <div class="form__group">
+                    <label class="form__label" for="regFullName">ПІБ</label>
+                    <input class="form__input" type="text" id="regFullName" required placeholder="Іванов Іван Іванович">
+                </div>
+                <div class="form__group">
+                    <label class="form__label" for="regCity">Місто</label>
+                    <input class="form__input" type="text" id="regCity" required placeholder="Київ">
+                </div>
+                <div class="form__group">
+                    <label class="form__label" for="regLicense">Категорія ліцензії</label>
+                    <select class="form__input" id="regLicense" required>
+                        <option value="" disabled selected>Оберіть ліцензію</option>
+                        <option value="National">Ліцензія Національна</option>
+                        <option value="Ліцензія А">Ліцензія А</option>
+                        <option value="Ліцензія В">Ліцензія В</option>
+                        <option value="Ліцензія С">Ліцензія С</option>
+                        <option value="Ліцензія D">Ліцензія D</option>
+                    </select>
+                </div>
+                
+                <div class="form__group">
+                    <label class="form__label" for="regRole">Хто ви?</label>
+                    <select class="form__input" id="regRole" required>
+                        <option value="REFEREE" selected>Арбітр</option>
+                        <option value="ADMIN">Головний суддя (Адмін)</option>
+                    </select>
+                </div>
+                
+                <div class="form__group" id="adminKeyGroup" style="display: none;">
+                    <label class="form__label" for="adminKey">Секретний ключ ліги</label>
+                    <input class="form__input" type="password" id="adminKey" placeholder="Введіть ключ доступу">
+                </div>
+                <div class="form__group">
+                    <label class="form__label" for="regEmail">Email (Логін)</label>
+                    <input class="form__input" type="email" id="regEmail" required placeholder="referee@mail.com">
+                </div>
+                <div class="form__group">
+                    <label class="form__label" for="regPassword">Пароль</label>
+                    <input class="form__input" type="password" id="regPassword" required placeholder="Мінімум 6 символів">
+                </div>
+                
+                <button class="button button--primary" type="submit">Зареєструватися</button>
+                <div class="form__error" id="regErrorMessage"></div>
+            </form>
+            
+            <p style="margin-top: 1rem; font-size: 0.9rem;">
+                Вже є акаунт? <a href="index.html" style="color: #e85d04;">Увійти</a>
+            </p>
+        </div>
+    </main>
+
+    <script src="js/register.js"></script>
+</body>
+</html>
