@@ -23,16 +23,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (response.ok) {
-                    // Якщо логін успішний, отримуємо дані користувача (JSON)
-                    const user = await response.json();
+                    // ЗМІНЕНО: Тепер сервер повертає { token: "...", user: {...} }
+                    const data = await response.json();
                     
-                    // Зберігаємо інфу про користувача в пам'ять браузера, щоб знати, хто зайшов
-                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    // 1. Зберігаємо цифровий ключ (JWT Token) у пам'ять браузера
+                    localStorage.setItem('jwtToken', data.token);
+
+                    // 2. Зберігаємо інфу про користувача
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
 
                     // Перенаправляємо на головний кабінет
                     window.location.href = 'dashboard.html';
                 } else {
-                    // Якщо бекенд видав помилку (неправильний пароль)
+                    // Якщо бекенд видав помилку (неправильний пароль або логін)
                     errorMessage.textContent = 'Неправильний email або пароль';
                     errorMessage.style.color = 'red';
                 }

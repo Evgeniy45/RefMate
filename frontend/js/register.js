@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedRole = document.getElementById('regRole').value;
             const secretKey = document.getElementById('adminKey').value;
 
-            // Збираємо дані з форми. Роль тепер береться з випадаючого списку
+            // Збираємо дані з форми
             const newUser = {
                 fullName: document.getElementById('regFullName').value,
                 city: document.getElementById('regCity').value,
@@ -35,11 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             try {
-                // Відправляємо запит, додаючи секретний ключ в URL
-                const response = await fetch(`http://localhost:8080/api/users?secretKey=${secretKey}`, {
+                // ЗМІНЕНО: Тепер ми відправляємо запит на /register
+                const response = await fetch(`http://localhost:8080/api/users/register?secretKey=${secretKey}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
+                        // Токен сюди НЕ додаємо, бо це відкритий маршрут
                     },
                     body: JSON.stringify(newUser)
                 });

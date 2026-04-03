@@ -3,7 +3,13 @@ package com.refereeapp.backend.controller;
 import com.refereeapp.backend.model.User;
 import com.refereeapp.backend.repository.UserRepository;
 import com.refereeapp.backend.service.UserService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import com.refereeapp.backend.security.JwtUtil;
+import org.springframework.http.ResponseEntity;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.List;
 
@@ -14,10 +20,14 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final UserService userService; 
+    private final PasswordEncoder passwordEncoder; 
+    private final JwtUtil jwtUtil;
 
-    public UserController(UserRepository userRepository, UserService userService) {
+    public UserController(UserRepository userRepository, UserService userService, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     @GetMapping
@@ -25,18 +35,21 @@ public class UserController {
         return userRepository.findAll();
     }
 
-   @PostMapping
+    // ЗМІНЕНО: Тепер цей метод слухає адресу /api/users/register
+    @PostMapping("/register")
     public User createUser(@RequestBody User user, @RequestParam(required = false) String secretKey) {
-        // Якщо користувач хоче стати адміном, перевіряємо ключ
+        // Логіка перевірки ролей та ключів
         if ("ADMIN".equals(user.getRole())) {
-            // Наш секретний ключ для захисту диплома: REFMATE-2026
             if (!"REFMATE-2026".equals(secretKey)) {
                 throw new RuntimeException("Неправильний секретний ключ адміністратора!");
             }
         } else {
-            // Захист: якщо роль не ADMIN, примусово ставимо REFEREE
             user.setRole("REFEREE");
         }
+        
+        // ШИФРУЄМО ПАРОЛЬ перед тим, як зберегти в базу
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        
         return userRepository.save(user);
     }
 
@@ -46,12 +59,23 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public User login(@RequestBody User loginData) {
-        User user = userRepository.findByEmailAndPassword(loginData.getEmail(), loginData.getPassword());
-        if (user == null) {
-            throw new RuntimeException("Неправильний email або пароль");
+    public ResponseEntity<Map<String, Object>> login(@RequestBody User loginData) {
+        User user = userRepository.findByEmail(loginData.getEmail())
+                .orElseThrow(() -> new RuntimeException("Користувача не знайдено"));
+
+        if (!passwordEncoder.matches(loginData.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Неправильний пароль");
         }
-        return user;
+
+        // ГЕНЕРУЄМО ТОКЕН
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole(), user.getId());
+
+        // Формуємо відповідь: віддаємо і токен, і дані користувача
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("user", user);
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")

@@ -2,9 +2,28 @@ let currentUser = null;
 let newSelectedRefereesList = [];
 let editSelectedRefereesList = [];
 
+// =========================================================
+// ФУНКЦІЯ-ПОМІЧНИК ДЛЯ АВТОРИЗАЦІЇ (НОВЕ)
+// =========================================================
+function getAuthHeaders() {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        // Якщо токена раптом немає, викидаємо на сторінку логіну
+        window.location.href = 'index.html';
+        return {};
+    }
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const userData = localStorage.getItem('currentUser');
-    if (!userData) { window.location.href = 'index.html'; return; }
+    const token = localStorage.getItem('jwtToken');
+    
+    // Перевіряємо, чи є і дані, і токен
+    if (!userData || !token) { window.location.href = 'index.html'; return; }
     currentUser = JSON.parse(userData);
 
     document.getElementById('userName').textContent = currentUser.fullName;
@@ -28,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function logout() {
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('jwtToken'); // Очищаємо токен при виході
     window.location.href = 'index.html';
 }
 
@@ -36,7 +56,11 @@ function logout() {
 // =========================================================
 async function loadReferees() {
     try {
-        const response = await fetch('http://localhost:8080/api/users');
+        const response = await fetch('http://localhost:8080/api/users', { headers: getAuthHeaders() });
+        if (!response.ok) {
+            if (response.status === 401) logout(); // Якщо токен протермінувався
+            return;
+        }
         const users = await response.json();
         const tbody = document.querySelector('#refereesTable tbody');
         if (!tbody) return; tbody.innerHTML = '';
@@ -45,7 +69,6 @@ async function loadReferees() {
             const isMe = ref.id === currentUser.id;
             const roleBadge = ref.role === 'ADMIN' ? '<span style="color:red; font-size:10px;">(Головний)</span>' : '';
             
-            // Адмін не може видалити самого себе
             const deleteBtn = isMe ? '' : `<button onclick="deleteUser(${ref.id})" class="button button--small" style="background:#e63946; padding:2px 6px;">🗑️</button>`;
 
             tbody.innerHTML += `
@@ -63,7 +86,10 @@ async function loadReferees() {
 async function deleteUser(id) {
     if (!confirm("Ви впевнені, що хочете видалити цього арбітра з системи?")) return;
     try {
-        const response = await fetch(`http://localhost:8080/api/users/${id}`, { method: 'DELETE' });
+        const response = await fetch(`http://localhost:8080/api/users/${id}`, { 
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
         if (response.ok) loadReferees();
     } catch (error) { console.error(error); }
 }
@@ -73,7 +99,7 @@ async function deleteUser(id) {
 // =========================================================
 async function loadMatches() {
     try {
-        const response = await fetch('http://localhost:8080/api/matches');
+        const response = await fetch('http://localhost:8080/api/matches', { headers: getAuthHeaders() });
         const matches = await response.json();
         const tbody = document.querySelector('#matchesTable tbody');
         if (!tbody) return; tbody.innerHTML = '';
@@ -124,12 +150,13 @@ async function loadMatches() {
 async function finishMatch(id) {
     if (!confirm("Перевести цей матч у статус 'Завершено'? (Арбітри більше не зможуть змінити своє рішення)")) return;
     try {
-        const response = await fetch(`http://localhost:8080/api/matches/${id}/finish`, { method: 'PUT' });
+        const response = await fetch(`http://localhost:8080/api/matches/${id}/finish`, { 
+            method: 'PUT',
+            headers: getAuthHeaders()
+        });
         if (response.ok) loadMatches();
     } catch (error) { console.error(error); }
 }
-
-// --- Решта функцій (редагування, створення, календар) залишаються без змін ---
 
 function attachAdminEventListeners() {
     const findRefereesBtn = document.getElementById('findRefereesBtn');
@@ -140,7 +167,9 @@ function attachAdminEventListeners() {
         const matchDateTime = document.getElementById('matchDateTime').value;
         if (!matchDateTime) return alert("Оберіть дату!");
         try {
-            const response = await fetch(`http://localhost:8080/api/users/available?date=${matchDateTime.split('T')[0]}`);
+            const response = await fetch(`http://localhost:8080/api/users/available?date=${matchDateTime.split('T')[0]}`, {
+                headers: getAuthHeaders()
+            });
             const availableReferees = await response.json();
             newSelectedRefereesList = []; renderNewSelectedRefereesUI();
             matchRefereeSelect.innerHTML = '<option value="" disabled selected>Оберіть суддю...</option>';
@@ -169,7 +198,9 @@ function attachAdminEventListeners() {
             referees: newSelectedRefereesList.map(r => ({ id: r.id }))
         };
         const response = await fetch('http://localhost:8080/api/matches', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newMatch)
+            method: 'POST', 
+            headers: getAuthHeaders(), 
+            body: JSON.stringify(newMatch)
         });
         if (response.ok) { matchForm.reset(); newSelectedRefereesList = []; renderNewSelectedRefereesUI(); loadMatches(); }
     });
@@ -194,7 +225,9 @@ function attachAdminEventListeners() {
             referees: editSelectedRefereesList.map(r => ({ id: r.id }))
         };
         const res = await fetch(`http://localhost:8080/api/matches/${id}`, {
-            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated)
+            method: 'PUT', 
+            headers: getAuthHeaders(), 
+            body: JSON.stringify(updated)
         });
         if (res.ok) { closeEditModal(); loadMatches(); loadMyMatches(); }
     });
@@ -213,7 +246,7 @@ function renderNewSelectedRefereesUI() {
 }
 
 async function openEditModal(id) {
-    const res = await fetch(`http://localhost:8080/api/matches/${id}`);
+    const res = await fetch(`http://localhost:8080/api/matches/${id}`, { headers: getAuthHeaders() });
     const match = await res.json();
     document.getElementById('editMatchId').value = match.id;
     document.getElementById('editTeamA').value = match.teamA;
@@ -241,7 +274,7 @@ function renderEditSelectedRefereesUI() {
 }
 
 async function loadAvailableRefereesForEdit(date) {
-    const res = await fetch(`http://localhost:8080/api/users/available?date=${date}`);
+    const res = await fetch(`http://localhost:8080/api/users/available?date=${date}`, { headers: getAuthHeaders() });
     const refs = await res.json();
     const select = document.getElementById('editMatchReferee');
     select.innerHTML = '<option value="" disabled selected>Оберіть суддю...</option>';
@@ -275,13 +308,15 @@ function renderMyDates() {
 
 async function saveDatesToBackend(arr) {
     const res = await fetch(`http://localhost:8080/api/users/${currentUser.id}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ availability: arr.join(', ') })
+        method: 'PUT', 
+        headers: getAuthHeaders(), 
+        body: JSON.stringify({ availability: arr.join(', ') })
     });
     if (res.ok) { currentUser = await res.json(); localStorage.setItem('currentUser', JSON.stringify(currentUser)); renderMyDates(); }
 }
 
 async function loadMyMatches() {
-    const res = await fetch('http://localhost:8080/api/matches');
+    const res = await fetch('http://localhost:8080/api/matches', { headers: getAuthHeaders() });
     const all = await res.json();
     const tbody = document.querySelector('#myMatchesTable tbody');
     if (!tbody) return; tbody.innerHTML = '';
@@ -299,10 +334,20 @@ async function loadMyMatches() {
 }
 
 async function changeMatchStatus(mid, rid, stat) {
-    const res = await fetch(`http://localhost:8080/api/matches/${mid}/status?refereeId=${rid}&status=${stat}`, { method: 'PUT' });
+    const res = await fetch(`http://localhost:8080/api/matches/${mid}/status?refereeId=${rid}&status=${stat}`, { 
+        method: 'PUT',
+        headers: getAuthHeaders()
+    });
     if (res.ok) { if (currentUser.role === 'ADMIN') loadMatches(); loadMyMatches(); }
 }
 
 async function deleteMatch(id) {
-    if (confirm("Видалити матч?")) { await fetch(`http://localhost:8080/api/matches/${id}`, { method: 'DELETE' }); loadMatches(); loadMyMatches(); }
+    if (confirm("Видалити матч?")) { 
+        await fetch(`http://localhost:8080/api/matches/${id}`, { 
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        }); 
+        loadMatches(); 
+        loadMyMatches(); 
+    }
 }
