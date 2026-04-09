@@ -34,7 +34,7 @@ public class Match {
     )
     private List<User> referees;
 
-    // НОВЕ: Зберігає індивідуальні статуси (Ключ - ID судді, Значення - його Статус)
+    // Зберігає індивідуальні статуси (Ключ - ID судді, Значення - його Статус)
     @ElementCollection
     @CollectionTable(name = "match_referee_status", joinColumns = @JoinColumn(name = "match_id"))
     @MapKeyColumn(name = "referee_id")

@@ -35,7 +35,6 @@ public class UserController {
         return userRepository.findAll();
     }
 
-    // ЗМІНЕНО: Тепер цей метод слухає адресу /api/users/register
     @PostMapping("/register")
     public User createUser(@RequestBody User user, @RequestParam(required = false) String secretKey) {
         // Логіка перевірки ролей та ключів

@@ -1,48 +1,49 @@
-// Чекаємо, поки весь HTML завантажиться
 document.addEventListener('DOMContentLoaded', () => {
-    
     const loginForm = document.getElementById('loginForm');
-    const errorMessage = document.getElementById('errorMessage');
 
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Зупиняємо стандартне перезавантаження сторінки
+            e.preventDefault(); 
 
-            // Збираємо дані з полів вводу
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
+            Swal.fire({
+                title: 'Вхід...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
             try {
-                // Відправляємо запит на наш Java-сервер
                 const response = await fetch('http://localhost:8080/api/users/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email, password: password })
                 });
 
                 if (response.ok) {
-                    // ЗМІНЕНО: Тепер сервер повертає { token: "...", user: {...} }
                     const data = await response.json();
-                    
-                    // 1. Зберігаємо цифровий ключ (JWT Token) у пам'ять браузера
                     localStorage.setItem('jwtToken', data.token);
-
-                    // 2. Зберігаємо інфу про користувача
                     localStorage.setItem('currentUser', JSON.stringify(data.user));
-
-                    // Перенаправляємо на головний кабінет
+                    
+                    Swal.close(); 
                     window.location.href = 'dashboard.html';
                 } else {
-                    // Якщо бекенд видав помилку (неправильний пароль або логін)
-                    errorMessage.textContent = 'Неправильний email або пароль';
-                    errorMessage.style.color = 'red';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Доступ заборонено',
+                        text: 'Неправильний email або пароль!',
+                        confirmButtonColor: '#e63946'
+                    });
                 }
             } catch (error) {
                 console.error('Помилка з\'єднання:', error);
-                errorMessage.textContent = 'Помилка з\'єднання з сервером';
-                errorMessage.style.color = 'red';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Помилка сервера',
+                    text: 'Сервер недоступний.',
+                    confirmButtonColor: '#e63946'
+                });
             }
         });
     }

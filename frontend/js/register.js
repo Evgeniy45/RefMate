@@ -1,17 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     const registerForm = document.getElementById('registerForm');
-    const errorMessage = document.getElementById('regErrorMessage');
     const roleSelect = document.getElementById('regRole');
     const adminKeyGroup = document.getElementById('adminKeyGroup');
 
-    // Логіка показу/приховування поля для секретного ключа
     if (roleSelect) {
         roleSelect.addEventListener('change', (e) => {
             if (e.target.value === 'ADMIN') {
                 adminKeyGroup.style.display = 'block';
             } else {
                 adminKeyGroup.style.display = 'none';
-                document.getElementById('adminKey').value = ''; // Очищаємо ключ, якщо передумали
+                document.getElementById('adminKey').value = ''; 
             }
         });
     }
@@ -23,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedRole = document.getElementById('regRole').value;
             const secretKey = document.getElementById('adminKey').value;
 
-            // Збираємо дані з форми
             const newUser = {
                 fullName: document.getElementById('regFullName').value,
                 city: document.getElementById('regCity').value,
@@ -34,28 +31,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 availability: "" 
             };
 
+            Swal.fire({
+                title: 'Реєстрація...',
+                text: 'Будь ласка, зачекайте.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
             try {
-                // ЗМІНЕНО: Тепер ми відправляємо запит на /register
                 const response = await fetch(`http://localhost:8080/api/users/register?secretKey=${secretKey}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                        // Токен сюди НЕ додаємо, бо це відкритий маршрут
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newUser)
                 });
 
                 if (response.ok) {
-                    alert('Реєстрація успішна! Тепер ви можете увійти.');
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Успіх!',
+                        text: 'Реєстрація пройшла успішно. Тепер ви можете увійти.',
+                        confirmButtonColor: '#e85d04'
+                    });
                     window.location.href = 'index.html'; 
                 } else {
-                    errorMessage.textContent = 'Помилка реєстрації. Перевірте дані або секретний ключ!';
-                    errorMessage.style.color = 'red';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Помилка!',
+                        text: 'Перевірте дані. Можливо, така пошта вже існує або введено неправильний секретний ключ.',
+                        confirmButtonColor: '#e63946'
+                    });
                 }
             } catch (error) {
                 console.error('Помилка:', error);
-                errorMessage.textContent = 'Помилка з\'єднання з сервером';
-                errorMessage.style.color = 'red';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Помилка з\'єднання',
+                    text: 'Не вдалося підключитися до сервера.',
+                    confirmButtonColor: '#e63946'
+                });
             }
         });
     }

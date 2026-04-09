@@ -19,7 +19,6 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // Впроваджуємо нашого "Охоронця"
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
@@ -37,14 +36,20 @@ public class SecurityConfig {
                 CorsConfiguration config = new CorsConfiguration();
                 config.setAllowedOrigins(List.of("*"));
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                config.setAllowedHeaders(List.of("*", "Authorization")); // ДОЗВОЛЯЄМО ПЕРЕДАВАТИ ТОКЕН
+                config.setAllowedHeaders(List.of("*", "Authorization")); 
                 return config;
             }))
             // Кажемо Spring Security НЕ створювати сесії (бо в нас REST API)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // ДОЗВОЛЕНО ВСІМ: логін та реєстрація
-                .requestMatchers("/api/users/login", "/api/users/register").permitAll()
+                // ДОЗВОЛЕНО ВСІМ: логін, реєстрація ТА сторінки документації Swagger
+                .requestMatchers(
+                        "/api/users/login", 
+                        "/api/users/register",
+                        "/v3/api-docs/**", 
+                        "/swagger-ui/**", 
+                        "/swagger-ui.html"
+                ).permitAll()
                 // УСЕ ІНШЕ: тільки з токеном
                 .anyRequest().authenticated()
             )

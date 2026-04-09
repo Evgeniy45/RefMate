@@ -2,13 +2,9 @@ let currentUser = null;
 let newSelectedRefereesList = [];
 let editSelectedRefereesList = [];
 
-// =========================================================
-// ФУНКЦІЯ-ПОМІЧНИК ДЛЯ АВТОРИЗАЦІЇ (НОВЕ)
-// =========================================================
 function getAuthHeaders() {
     const token = localStorage.getItem('jwtToken');
     if (!token) {
-        // Якщо токена раптом немає, викидаємо на сторінку логіну
         window.location.href = 'index.html';
         return {};
     }
@@ -22,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const userData = localStorage.getItem('currentUser');
     const token = localStorage.getItem('jwtToken');
     
-    // Перевіряємо, чи є і дані, і токен
     if (!userData || !token) { window.location.href = 'index.html'; return; }
     currentUser = JSON.parse(userData);
 
@@ -47,18 +42,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function logout() {
     localStorage.removeItem('currentUser');
-    localStorage.removeItem('jwtToken'); // Очищаємо токен при виході
+    localStorage.removeItem('jwtToken'); 
     window.location.href = 'index.html';
 }
 
-// =========================================================
-// АДМІН: КЕРУВАННЯ КОРИСТУВАЧАМИ (АРБІТРАМИ)
-// =========================================================
 async function loadReferees() {
     try {
         const response = await fetch('http://localhost:8080/api/users', { headers: getAuthHeaders() });
         if (!response.ok) {
-            if (response.status === 401) logout(); // Якщо токен протермінувався
+            if (response.status === 401) logout(); 
             return;
         }
         const users = await response.json();
@@ -68,7 +60,6 @@ async function loadReferees() {
         users.forEach(ref => {
             const isMe = ref.id === currentUser.id;
             const roleBadge = ref.role === 'ADMIN' ? '<span style="color:red; font-size:10px;">(Головний)</span>' : '';
-            
             const deleteBtn = isMe ? '' : `<button onclick="deleteUser(${ref.id})" class="button button--small" style="background:#e63946; padding:2px 6px;">🗑️</button>`;
 
             tbody.innerHTML += `
@@ -84,19 +75,31 @@ async function loadReferees() {
 }
 
 async function deleteUser(id) {
-    if (!confirm("Ви впевнені, що хочете видалити цього арбітра з системи?")) return;
-    try {
-        const response = await fetch(`http://localhost:8080/api/users/${id}`, { 
-            method: 'DELETE',
-            headers: getAuthHeaders()
-        });
-        if (response.ok) loadReferees();
-    } catch (error) { console.error(error); }
+    const result = await Swal.fire({
+        title: 'Ви впевнені?',
+        text: "Цього арбітра буде назавжди видалено з системи!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e63946',
+        cancelButtonColor: '#aaa',
+        confirmButtonText: 'Так, видалити',
+        cancelButtonText: 'Скасувати'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const response = await fetch(`http://localhost:8080/api/users/${id}`, { 
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            if (response.ok) {
+                Swal.fire('Видалено!', 'Арбітра успішно видалено.', 'success');
+                loadReferees();
+            }
+        } catch (error) { console.error(error); }
+    }
 }
 
-// =========================================================
-// АДМІН: КЕРУВАННЯ МАТЧАМИ ТА ЗАВЕРШЕННЯ
-// =========================================================
 async function loadMatches() {
     try {
         const response = await fetch('http://localhost:8080/api/matches', { headers: getAuthHeaders() });
@@ -148,14 +151,49 @@ async function loadMatches() {
 }
 
 async function finishMatch(id) {
-    if (!confirm("Перевести цей матч у статус 'Завершено'? (Арбітри більше не зможуть змінити своє рішення)")) return;
-    try {
-        const response = await fetch(`http://localhost:8080/api/matches/${id}/finish`, { 
-            method: 'PUT',
+    const result = await Swal.fire({
+        title: 'Завершити матч?',
+        text: "Після цього арбітри більше не зможуть змінити своє рішення.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#333',
+        cancelButtonColor: '#aaa',
+        confirmButtonText: 'Так, завершити',
+        cancelButtonText: 'Скасувати'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const response = await fetch(`http://localhost:8080/api/matches/${id}/finish`, { 
+                method: 'PUT',
+                headers: getAuthHeaders()
+            });
+            if (response.ok) loadMatches();
+        } catch (error) { console.error(error); }
+    }
+}
+
+async function deleteMatch(id) {
+    const result = await Swal.fire({
+        title: 'Видалити матч?',
+        text: "Цю дію неможливо скасувати!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e63946',
+        cancelButtonColor: '#aaa',
+        confirmButtonText: 'Так, видалити',
+        cancelButtonText: 'Скасувати'
+    });
+
+    if (result.isConfirmed) {
+        await fetch(`http://localhost:8080/api/matches/${id}`, { 
+            method: 'DELETE',
             headers: getAuthHeaders()
-        });
-        if (response.ok) loadMatches();
-    } catch (error) { console.error(error); }
+        }); 
+        loadMatches(); 
+        loadMyMatches(); 
+        Swal.fire('Видалено!', 'Матч успішно видалено.', 'success');
+    }
 }
 
 function attachAdminEventListeners() {
@@ -165,19 +203,33 @@ function attachAdminEventListeners() {
 
     findRefereesBtn?.addEventListener('click', async () => {
         const matchDateTime = document.getElementById('matchDateTime').value;
-        if (!matchDateTime) return alert("Оберіть дату!");
+        if (!matchDateTime) {
+            Swal.fire('Увага!', 'Оберіть дату та час матчу!', 'info');
+            return;
+        }
+        
+        Swal.fire({ title: 'Шукаємо вільних суддів...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
         try {
             const response = await fetch(`http://localhost:8080/api/users/available?date=${matchDateTime.split('T')[0]}`, {
                 headers: getAuthHeaders()
             });
             const availableReferees = await response.json();
+            
+            Swal.close(); 
+
+            if(availableReferees.length === 0) {
+                Swal.fire('На жаль', 'На цю дату немає вільних суддів.', 'warning');
+                return;
+            }
+
             newSelectedRefereesList = []; renderNewSelectedRefereesUI();
             matchRefereeSelect.innerHTML = '<option value="" disabled selected>Оберіть суддю...</option>';
             availableReferees.forEach(ref => {
                 matchRefereeSelect.innerHTML += `<option value="${ref.id}">${ref.fullName} - ${ref.licenseCategory}</option>`;
             });
             document.getElementById('refereeSelectGroup').style.display = 'block';
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error(e); Swal.close(); }
     });
 
     matchRefereeSelect?.addEventListener('change', (e) => {
@@ -192,20 +244,36 @@ function attachAdminEventListeners() {
 
     matchForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        if(newSelectedRefereesList.length === 0) {
+            Swal.fire('Помилка', 'Оберіть хоча б одного арбітра для матчу!', 'error');
+            return;
+        }
+
         const newMatch = {
             teamA: document.getElementById('teamA').value, teamB: document.getElementById('teamB').value,
             location: document.getElementById('matchLocation').value, dateTime: document.getElementById('matchDateTime').value,
             referees: newSelectedRefereesList.map(r => ({ id: r.id }))
         };
+        
+        Swal.fire({ title: 'Створення матчу...', text: 'Розсилаємо листи арбітрам...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
         const response = await fetch('http://localhost:8080/api/matches', {
             method: 'POST', 
             headers: getAuthHeaders(), 
             body: JSON.stringify(newMatch)
         });
-        if (response.ok) { matchForm.reset(); newSelectedRefereesList = []; renderNewSelectedRefereesUI(); loadMatches(); }
+        
+        if (response.ok) { 
+            matchForm.reset(); 
+            newSelectedRefereesList = []; 
+            renderNewSelectedRefereesUI(); 
+            document.getElementById('refereeSelectGroup').style.display = 'none';
+            loadMatches(); 
+            Swal.fire('Успіх!', 'Матч створено. Листи відправлено!', 'success');
+        }
     });
 
-    // Події редагування
     document.getElementById('editMatchReferee')?.addEventListener('change', (e) => {
         const id = parseInt(e.target.value);
         const name = e.target.options[e.target.selectedIndex].text.split(' - ')[0];
@@ -229,7 +297,12 @@ function attachAdminEventListeners() {
             headers: getAuthHeaders(), 
             body: JSON.stringify(updated)
         });
-        if (res.ok) { closeEditModal(); loadMatches(); loadMyMatches(); }
+        if (res.ok) { 
+            closeEditModal(); 
+            loadMatches(); 
+            loadMyMatches(); 
+            Swal.fire('Оновлено!', 'Дані матчу змінено.', 'success');
+        }
     });
 }
 
@@ -281,13 +354,20 @@ async function loadAvailableRefereesForEdit(date) {
     refs.forEach(ref => { select.innerHTML += `<option value="${ref.id}">${ref.fullName} - ${ref.licenseCategory}</option>`; });
 }
 
-// --- СУДДІВСЬКІ ФУНКЦІЇ ---
-
 function attachRefereeEventListeners() {
     document.getElementById('addDateBtn')?.addEventListener('click', () => {
         const input = document.getElementById('availableDate');
         let dates = currentUser.availability ? currentUser.availability.split(',').map(d => d.trim()).filter(d => d) : [];
-        if (!input.value || dates.includes(input.value)) return;
+        
+        if (!input.value) {
+            Swal.fire('Увага', 'Будь ласка, оберіть дату', 'info');
+            return;
+        }
+        if (dates.includes(input.value)) {
+            Swal.fire('Увага', 'Ви вже додали цю дату', 'info');
+            return;
+        }
+
         dates.push(input.value); dates.sort();
         saveDatesToBackend(dates); input.value = '';
     });
@@ -312,7 +392,11 @@ async function saveDatesToBackend(arr) {
         headers: getAuthHeaders(), 
         body: JSON.stringify({ availability: arr.join(', ') })
     });
-    if (res.ok) { currentUser = await res.json(); localStorage.setItem('currentUser', JSON.stringify(currentUser)); renderMyDates(); }
+    if (res.ok) { 
+        currentUser = await res.json(); 
+        localStorage.setItem('currentUser', JSON.stringify(currentUser)); 
+        renderMyDates(); 
+    }
 }
 
 async function loadMyMatches() {
@@ -326,28 +410,35 @@ async function loadMyMatches() {
         const myStat = m.refereeStatuses ? m.refereeStatuses[currentUser.id] : 'PENDING';
         let action = '';
         if (m.finished) action = `<span class="badge" style="background:#333; color:white;">🏁 Завершено</span>`;
-        else if (myStat === 'PENDING') action = `<button onclick="changeMatchStatus(${m.id}, ${currentUser.id}, 'ACCEPTED')" class="button button--small" style="background:#2a9d8f;">✅</button> <button onclick="changeMatchStatus(${m.id}, ${currentUser.id}, 'DECLINED')" class="button button--small" style="background:#e63946;">❌</button>`;
+        else if (myStat === 'PENDING') action = `<button onclick="changeMatchStatus(${m.id}, ${currentUser.id}, 'ACCEPTED')" class="button button--small" style="background:#2a9d8f;">✅ Підтвердити</button> <button onclick="changeMatchStatus(${m.id}, ${currentUser.id}, 'DECLINED')" class="button button--small" style="background:#e63946;">❌ Відхилити</button>`;
         else action = myStat === 'ACCEPTED' ? '🟢 Підтверджено' : '🔴 Відхилено';
         
-        tbody.innerHTML += `<tr><td>${new Date(m.dateTime).toLocaleString('uk-UA', { dateStyle: 'short', timeStyle: 'short' })}</td><td>${m.teamA} - ${m.teamB}</td><td>${m.location}</td><td>${action}</td></tr>`;
+        tbody.innerHTML += `<tr><td>${new Date(m.dateTime).toLocaleString('uk-UA', { dateStyle: 'short', timeStyle: 'short' })}</td><td>${m.teamA} - ${m.teamB}</td><td>${m.location}</td><td style="display:flex; gap:5px;">${action}</td></tr>`;
     });
 }
 
 async function changeMatchStatus(mid, rid, stat) {
-    const res = await fetch(`http://localhost:8080/api/matches/${mid}/status?refereeId=${rid}&status=${stat}`, { 
-        method: 'PUT',
-        headers: getAuthHeaders()
+    const actionText = stat === 'ACCEPTED' ? 'підтвердити' : 'відхилити';
+    const result = await Swal.fire({
+        title: 'Ви впевнені?',
+        text: `Ви збираєтесь ${actionText} призначення на цей матч.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: stat === 'ACCEPTED' ? '#2a9d8f' : '#e63946',
+        cancelButtonColor: '#aaa',
+        confirmButtonText: 'Так',
+        cancelButtonText: 'Скасувати'
     });
-    if (res.ok) { if (currentUser.role === 'ADMIN') loadMatches(); loadMyMatches(); }
-}
 
-async function deleteMatch(id) {
-    if (confirm("Видалити матч?")) { 
-        await fetch(`http://localhost:8080/api/matches/${id}`, { 
-            method: 'DELETE',
+    if (result.isConfirmed) {
+        const res = await fetch(`http://localhost:8080/api/matches/${mid}/status?refereeId=${rid}&status=${stat}`, { 
+            method: 'PUT',
             headers: getAuthHeaders()
-        }); 
-        loadMatches(); 
-        loadMyMatches(); 
+        });
+        if (res.ok) { 
+            if (currentUser.role === 'ADMIN') loadMatches(); 
+            loadMyMatches(); 
+            Swal.fire('Збережено!', 'Ваш статус оновлено.', 'success');
+        }
     }
 }

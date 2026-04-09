@@ -3,6 +3,8 @@ package com.refereeapp.backend.controller;
 import com.refereeapp.backend.model.Match;
 import com.refereeapp.backend.model.User;
 import com.refereeapp.backend.repository.MatchRepository;
+import com.refereeapp.backend.repository.UserRepository;
+import com.refereeapp.backend.service.EmailService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -15,9 +17,13 @@ import java.util.Map;
 public class MatchController {
 
     private final MatchRepository matchRepository;
+    private final EmailService emailService;     
+    private final UserRepository userRepository; 
 
-    public MatchController(MatchRepository matchRepository) {
+    public MatchController(MatchRepository matchRepository, EmailService emailService, UserRepository userRepository) {
         this.matchRepository = matchRepository;
+        this.emailService = emailService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -25,7 +31,6 @@ public class MatchController {
         return matchRepository.findAll();
     }
 
-    // НОВЕ: Отримати конкретний матч по ID (для модального вікна редагування)
     @GetMapping("/{id}")
     public Match getMatchById(@PathVariable Long id) {
         return matchRepository.findById(id).orElseThrow(() -> new RuntimeException("Матч не знайдено"));
@@ -33,12 +38,34 @@ public class MatchController {
 
     @PostMapping
     public Match createMatch(@RequestBody Match match) {
+        // 1. Встановлюємо статус PENDING для всіх призначених арбітрів
         if (match.getReferees() != null) {
             for (User ref : match.getReferees()) {
                 match.getRefereeStatuses().put(ref.getId(), "PENDING");
             }
         }
-        return matchRepository.save(match);
+        
+        // 2. Зберігаємо матч у базу
+        Match savedMatch = matchRepository.save(match);
+
+        // 3. Розсилаємо листи всім призначеним суддям
+        if (savedMatch.getReferees() != null) {
+            for (User ref : savedMatch.getReferees()) {
+                // Дістаємо повну інформацію про суддю з бази (щоб отримати його email)
+                userRepository.findById(ref.getId()).ifPresent(fullReferee -> {
+                    emailService.sendMatchAssignmentEmail(
+                            fullReferee.getEmail(),
+                            fullReferee.getFullName(),
+                            savedMatch.getTeamA(),
+                            savedMatch.getTeamB(),
+                            savedMatch.getDateTime().toString(),
+                            savedMatch.getLocation()
+                    );
+                });
+            }
+        }
+
+        return savedMatch;
     }
 
     @PutMapping("/{id}/status")
@@ -49,7 +76,6 @@ public class MatchController {
         }).orElseThrow(() -> new RuntimeException("Матч не знайдено"));
     }
 
-    // НОВЕ: Повне редагування матчу
     @PutMapping("/{id}")
     public Match updateMatch(@PathVariable Long id, @RequestBody Match updatedMatch) {
         return matchRepository.findById(id).map(match -> {
@@ -81,10 +107,10 @@ public class MatchController {
         matchRepository.deleteById(id);
     }
 
-   @PutMapping("/{id}/finish")
+    @PutMapping("/{id}/finish")
     public Match finishMatch(@PathVariable Long id) {
         return matchRepository.findById(id).map(match -> {
-            match.setFinished(true); // Просто ставимо прапорець "Завершено"
+            match.setFinished(true);
             return matchRepository.save(match);
         }).orElseThrow(() -> new RuntimeException("Матч не знайдено"));
     }

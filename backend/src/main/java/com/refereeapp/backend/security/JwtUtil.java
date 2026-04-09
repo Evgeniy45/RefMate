@@ -11,7 +11,7 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    // Секретний ключ генерується автоматично (дуже надійно)
+    // Секретний ключ генерується автоматично 
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     
     // Токен "живе" рівно 1 добу (в мілісекундах)
