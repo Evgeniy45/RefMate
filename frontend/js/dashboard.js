@@ -48,7 +48,7 @@ function logout() {
 
 async function loadReferees() {
     try {
-        const response = await fetch('http://localhost:8080/api/users', { headers: getAuthHeaders() });
+        const response = await fetch('https://refmate-api.onrender.com/api/users', { headers: getAuthHeaders() });
         if (!response.ok) {
             if (response.status === 401) logout(); 
             return;
@@ -88,7 +88,7 @@ async function deleteUser(id) {
 
     if (result.isConfirmed) {
         try {
-            const response = await fetch(`http://localhost:8080/api/users/${id}`, { 
+            const response = await fetch(`https://refmate-api.onrender.com/api/users/${id}`, { 
                 method: 'DELETE',
                 headers: getAuthHeaders()
             });
@@ -102,7 +102,7 @@ async function deleteUser(id) {
 
 async function loadMatches() {
     try {
-        const response = await fetch('http://localhost:8080/api/matches', { headers: getAuthHeaders() });
+        const response = await fetch('https://refmate-api.onrender.com/api/matches', { headers: getAuthHeaders() });
         const matches = await response.json();
         const tbody = document.querySelector('#matchesTable tbody');
         if (!tbody) return; tbody.innerHTML = '';
@@ -164,7 +164,7 @@ async function finishMatch(id) {
 
     if (result.isConfirmed) {
         try {
-            const response = await fetch(`http://localhost:8080/api/matches/${id}/finish`, { 
+            const response = await fetch(`https://refmate-api.onrender.com/api/matches/${id}/finish`, { 
                 method: 'PUT',
                 headers: getAuthHeaders()
             });
@@ -186,7 +186,7 @@ async function deleteMatch(id) {
     });
 
     if (result.isConfirmed) {
-        await fetch(`http://localhost:8080/api/matches/${id}`, { 
+        await fetch(`https://refmate-api.onrender.com/api/matches/${id}`, { 
             method: 'DELETE',
             headers: getAuthHeaders()
         }); 
@@ -211,7 +211,7 @@ function attachAdminEventListeners() {
         Swal.fire({ title: 'Шукаємо вільних суддів...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
 
         try {
-            const response = await fetch(`http://localhost:8080/api/users/available?date=${matchDateTime.split('T')[0]}`, {
+            const response = await fetch(`https://refmate-api.onrender.com/api/users/available?date=${matchDateTime.split('T')[0]}`, {
                 headers: getAuthHeaders()
             });
             const availableReferees = await response.json();
@@ -258,7 +258,7 @@ function attachAdminEventListeners() {
         
         Swal.fire({ title: 'Створення матчу...', text: 'Розсилаємо листи арбітрам...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
 
-        const response = await fetch('http://localhost:8080/api/matches', {
+        const response = await fetch('https://refmate-api.onrender.com/api/matches', {
             method: 'POST', 
             headers: getAuthHeaders(), 
             body: JSON.stringify(newMatch)
@@ -292,7 +292,7 @@ function attachAdminEventListeners() {
             location: document.getElementById('editLocation').value, dateTime: document.getElementById('editDateTime').value,
             referees: editSelectedRefereesList.map(r => ({ id: r.id }))
         };
-        const res = await fetch(`http://localhost:8080/api/matches/${id}`, {
+        const res = await fetch(`https://refmate-api.onrender.com/api/matches/${id}`, {
             method: 'PUT', 
             headers: getAuthHeaders(), 
             body: JSON.stringify(updated)
@@ -319,7 +319,7 @@ function renderNewSelectedRefereesUI() {
 }
 
 async function openEditModal(id) {
-    const res = await fetch(`http://localhost:8080/api/matches/${id}`, { headers: getAuthHeaders() });
+    const res = await fetch(`https://refmate-api.onrender.com/api/matches/${id}`, { headers: getAuthHeaders() });
     const match = await res.json();
     document.getElementById('editMatchId').value = match.id;
     document.getElementById('editTeamA').value = match.teamA;
@@ -347,7 +347,7 @@ function renderEditSelectedRefereesUI() {
 }
 
 async function loadAvailableRefereesForEdit(date) {
-    const res = await fetch(`http://localhost:8080/api/users/available?date=${date}`, { headers: getAuthHeaders() });
+    const res = await fetch(`https://refmate-api.onrender.com/api/users/available?date=${date}`, { headers: getAuthHeaders() });
     const refs = await res.json();
     const select = document.getElementById('editMatchReferee');
     select.innerHTML = '<option value="" disabled selected>Оберіть суддю...</option>';
@@ -387,7 +387,7 @@ function renderMyDates() {
 }
 
 async function saveDatesToBackend(arr) {
-    const res = await fetch(`http://localhost:8080/api/users/${currentUser.id}`, {
+    const res = await fetch(`https://refmate-api.onrender.com/api/users/${currentUser.id}`, {
         method: 'PUT', 
         headers: getAuthHeaders(), 
         body: JSON.stringify({ availability: arr.join(', ') })
@@ -400,7 +400,7 @@ async function saveDatesToBackend(arr) {
 }
 
 async function loadMyMatches() {
-    const res = await fetch('http://localhost:8080/api/matches', { headers: getAuthHeaders() });
+    const res = await fetch('https://refmate-api.onrender.com/api/matches', { headers: getAuthHeaders() });
     const all = await res.json();
     const tbody = document.querySelector('#myMatchesTable tbody');
     if (!tbody) return; tbody.innerHTML = '';
@@ -431,7 +431,7 @@ async function changeMatchStatus(mid, rid, stat) {
     });
 
     if (result.isConfirmed) {
-        const res = await fetch(`http://localhost:8080/api/matches/${mid}/status?refereeId=${rid}&status=${stat}`, { 
+        const res = await fetch(`https://refmate-api.onrender.com/api/matches/${mid}/status?refereeId=${rid}&status=${stat}`, { 
             method: 'PUT',
             headers: getAuthHeaders()
         });
