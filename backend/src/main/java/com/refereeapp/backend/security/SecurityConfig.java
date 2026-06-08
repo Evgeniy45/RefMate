@@ -48,7 +48,8 @@ public class SecurityConfig {
                         "/api/users/register",
                         "/v3/api-docs/**", 
                         "/swagger-ui/**", 
-                        "/swagger-ui.html"
+                        "/swagger-ui.html",
+                        "/error"
                 ).permitAll()
                 // УСЕ ІНШЕ: тільки з токеном
                 .anyRequest().authenticated()
