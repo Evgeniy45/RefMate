@@ -3,6 +3,7 @@ package com.refereeapp.backend.service;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Async; // 1. ДОДАНО ІМПОРТ
 
 @Service
 public class EmailService {
@@ -14,6 +15,7 @@ public class EmailService {
         this.mailSender = mailSender;
     }
 
+    @Async // 2. ДОДАНО АНОТАЦІЮ
     public void sendMatchAssignmentEmail(String toEmail, String refereeName, String teamA, String teamB, String dateTime, String location) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
