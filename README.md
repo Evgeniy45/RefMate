@@ -1,12 +1,12 @@
 # RefMate (Referee Management Platform)
 
-[cite_start]RefMate is a custom full-stack web application engineered to streamline scheduling, communication, and comprehensive data management for basketball referees[cite: 325].
+RefMate is a custom full-stack web application engineered to streamline scheduling, communication, and comprehensive data management for basketball referees.
 
 ## Project Links
 🚀 **Live Demo:** [https://ref-mate.vercel.app/](https://ref-mate.vercel.app/)  
-[cite_start]*(Note: Initial live demo loading may take up to 2 minutes due to free tier backend spin-up on Render).* [cite: 327]
+*(Note: Initial live demo loading may take up to 2 minutes due to free tier backend spin-up on Render).*
 
-[cite_start]💻 **GitHub Repository (Frontend & Backend):** [https://github.com/Evgeniy45/RefMate](https://github.com/Evgeniy45/RefMate) 
+💻 **GitHub Repository (Frontend & Backend):** [https://github.com/Evgeniy45/RefMate](https://github.com/Evgeniy45/RefMate) 
 
 ---
 
@@ -39,8 +39,8 @@
 
 Highlighting the key implementation capabilities that make the project stand out:
 
-* [cite_start]**Interactive Dynamic Calendar:** Visually rich grid component optimizing the scheduling process for users and matching availability matrices dynamically[cite: 286].
-* [cite_start]**Precise Sorting Logic:** Algorithmic automated filtering routines that sort system matches and scheduling variables based on user parameters[cite: 286].
+* **Interactive Dynamic Calendar:** Visually rich grid component optimizing the scheduling process for users and matching availability matrices dynamically.
+* **Precise Sorting Logic:** Algorithmic automated filtering routines that sort system matches and scheduling variables based on user parameters.
 * **Role-Based Authentication:** Complete system signup, registration validation flows, and protected secure paths guarded by JWT validation.
 * **Responsive Web Design (RWD):** Tailored structural fluid layout reflows optimized for multiple screens (Desktop, Tablet, Mobile).
 * **Automated Notification Engine:** Integrated SMTP module dispatching email triggers directly linked to scheduler event hooks.
@@ -48,7 +48,6 @@ Highlighting the key implementation capabilities that make the project stand out
 ---
 
 ## Project Interface 📸
-[cite_start]*(Optional: If you choose to add pictures, place your images in an `assets/` folder in your repository and name them correctly)* [cite: 337]
 
 ### 📅 Dashboard View
 <img src="assets/демо.gif" alt="RefMate Dashboard Preview" width="800"/>
@@ -73,11 +72,11 @@ Ensure you have a local PostgreSQL instance running or populate your `.env` vari
 ```
 
 ### 3. Serve Frontend Locally
-[cite_start]Open the frontend folder on your machine or deploy it via a local static server configuration[cite: 341]:
+Open the frontend folder on your machine or deploy it via a local static server configuration:
 
 ```bash
 # Simply open the main index page or use Live Server extension in VS Code
 open index.html
 ```
 
-[cite_start]The application frontend will communicate natively with the server APIs running on `http://localhost:8080`[cite: 342, 345].
+The application frontend will communicate natively with the server APIs running on `http://localhost:8080`.
